@@ -5,7 +5,7 @@ import { randomUUID } from "crypto";
 import { checkSessionIDExists } from "../middlewares/checkSessionIDExists";
 
 export async function mealsRoutes(app: FastifyInstance) {
-    app.get("/", {preHandler: [checkSessionIDExists]}, async (request) => {
+    app.get("/", { preHandler: [checkSessionIDExists] }, async (request) => {
         const { sessionId } = request.cookies;
 
         const meals = await knex("meals")
@@ -15,7 +15,26 @@ export async function mealsRoutes(app: FastifyInstance) {
         return { meals };
     });
 
-    app.post("/", {preHandler: [checkSessionIDExists]}, async (request, reply) => {
+    app.get("/:id", { preHandler: [checkSessionIDExists] }, async (request) => {
+        const getMealsParamsResponse = z.object({
+            id: z.string().uuid()
+        });
+
+        const { id } = getMealsParamsResponse.parse(request.params);
+
+        const { sessionId } = request.cookies;
+
+        const meal = await knex("meals")
+            .where({
+                id,
+                FK_user_id: sessionId
+            })
+            .first();
+
+        return { meal };
+    });
+
+    app.post("/", { preHandler: [checkSessionIDExists] }, async (request, reply) => {
         const createMealsBodySchema = z.object({
             name: z.string(),
             description: z.string(),
@@ -38,7 +57,7 @@ export async function mealsRoutes(app: FastifyInstance) {
         reply.status(201).send();
     });
 
-    app.post("/:id", {preHandler: [checkSessionIDExists]},async (request) => {
+    app.post("/:id", { preHandler: [checkSessionIDExists] }, async (request) => {
         const getMealsParamsResponse = z.object({
             id: z.string().uuid()
         });
