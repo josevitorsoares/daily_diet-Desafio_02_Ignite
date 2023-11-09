@@ -2,9 +2,10 @@ import { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { knex } from "../database";
 import { randomUUID } from "crypto";
+import { checkSessionIDExists } from "../middlewares/checkSessionIDExists";
 
 export async function mealsRoutes(app: FastifyInstance) {
-    app.get("/", async (request) => {
+    app.get("/", {preHandler: [checkSessionIDExists]}, async (request) => {
         const { sessionId } = request.cookies;
 
         const meals = await knex("meals")
@@ -14,7 +15,7 @@ export async function mealsRoutes(app: FastifyInstance) {
         return { meals };
     });
 
-    app.post("/", async (request, reply) => {
+    app.post("/", {preHandler: [checkSessionIDExists]}, async (request, reply) => {
         const createMealsBodySchema = z.object({
             name: z.string(),
             description: z.string(),
@@ -37,7 +38,7 @@ export async function mealsRoutes(app: FastifyInstance) {
         reply.status(201).send();
     });
 
-    app.post("/:id", async (request) => {
+    app.post("/:id", {preHandler: [checkSessionIDExists]},async (request) => {
         const getMealsParamsResponse = z.object({
             id: z.string().uuid()
         });
