@@ -13,6 +13,7 @@ export async function mealsRoutes(app: FastifyInstance) {
 
         return { meals };
     });
+
     app.post("/", async (request, reply) => {
         const createMealsBodySchema = z.object({
             name: z.string(),
@@ -34,5 +35,33 @@ export async function mealsRoutes(app: FastifyInstance) {
         });
 
         reply.status(201).send();
+    });
+
+    app.post("/:id", async (request) => {
+        const getMealsParamsResponse = z.object({
+            id: z.string().uuid()
+        });
+
+        const { id } = getMealsParamsResponse.parse(request.params);
+
+        const createMealsBodySchema = z.object({
+            name: z.string(),
+            description: z.string(),
+            dateTime: z.string(),
+            inDiet: z.boolean(),
+        });
+
+        const { name, description, dateTime, inDiet } = createMealsBodySchema.parse(request.body);
+
+        const meal = await knex("meals")
+            .where("id", id)
+            .update({
+                name,
+                description,
+                dateTime,
+                inDiet
+            }).returning("*");
+
+        return { meal };
     });
 }
