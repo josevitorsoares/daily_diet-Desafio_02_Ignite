@@ -13,7 +13,7 @@ Nesse desafio foi desenvolvida uma API para controle de dieta diária, a Daily D
 - [x] Deve ser possível criar um usuário
 - [x] Deve ser possível identificar o usuário entre as requisições
 - [x]  Deve ser possível identificar o usuário entre as requisições:
-    *As refeições devem ser relacionadas a um usuário.*
+*As refeições devem ser relacionadas a um usuário.*
   - Nome
   - Descrição
   - Data e Hora
