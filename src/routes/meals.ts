@@ -57,7 +57,7 @@ export async function mealsRoutes(app: FastifyInstance) {
         reply.status(201).send();
     });
 
-    app.post("/:id", { preHandler: [checkSessionIDExists] }, async (request) => {
+    app.put("/:id", { preHandler: [checkSessionIDExists] }, async (request) => {
         const getMealsParamsResponse = z.object({
             id: z.string().uuid()
         });
@@ -83,5 +83,22 @@ export async function mealsRoutes(app: FastifyInstance) {
             }).returning("*");
 
         return { meal };
+    });
+
+    app.delete("/:id", {preHandler: [checkSessionIDExists]}, async (request) => {
+        const getMealsParamsResponse = z.object({
+            id: z.string().uuid()
+        });
+
+        const { id } = getMealsParamsResponse.parse(request.params);
+        const { sessionId } = request.cookies;
+
+        await knex("meals")
+            .where({
+                id,
+                FK_user_id: sessionId
+            })
+            .del();
+
     });
 }
