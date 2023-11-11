@@ -34,11 +34,42 @@ export async function mealsRoutes(app: FastifyInstance) {
         return { meal };
     });
 
+    app.get("/statistics", { preHandler: [checkSessionIDExists] }, async (request) => {
+        const { sessionId } = request.cookies;
+
+        const totalMelas = await knex("meals")
+            .where("FK_user_id", sessionId)
+            .count("id", {as: "total"})
+            .first();
+        
+        const melasInDiet = await knex("meals")
+            .where({
+                FK_user_id: sessionId,
+                inDiet: true
+            })
+            .count("id", {as: "total"})
+            .first();
+        
+        const mealsOutDiet = await knex("meals")
+            .where({
+                FK_user_id: sessionId,
+                inDiet: false
+            })
+            .count("id", {as: "total"})
+            .first();
+
+        return {
+            totalMelas,
+            melasInDiet,
+            mealsOutDiet,
+        };
+    });
+
     app.post("/", { preHandler: [checkSessionIDExists] }, async (request, reply) => {
         const createMealsBodySchema = z.object({
             name: z.string(),
             description: z.string(),
-            dateTime: z.string(),
+            dateTime: z.string().datetime("2022-01-12T00:00:00.000Z"),
             inDiet: z.boolean()
         });
 
@@ -99,6 +130,5 @@ export async function mealsRoutes(app: FastifyInstance) {
                 FK_user_id: sessionId
             })
             .del();
-
     });
 }
