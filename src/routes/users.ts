@@ -2,9 +2,10 @@ import { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { knex } from "../database";
 import { randomUUID } from "crypto";
+import { checkSessionIDExists } from "../middlewares/checkSessionIDExists";
 
 export async function usersRoutes(app: FastifyInstance) {
-    app.post("/", async (request, reply) => {
+    app.post("/", { preHandler: [checkSessionIDExists] }, async (request, reply) => {
         const createUserBodySchema = z.object({
             name: z.string(),
             email: z.string()
