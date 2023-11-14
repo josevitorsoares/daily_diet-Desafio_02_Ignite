@@ -4,6 +4,15 @@ import { knex } from "../database";
 import { randomUUID } from "crypto";
 import { checkSessionIDExists } from "../middlewares/checkSessionIDExists";
 
+type IMeals = {
+    name: string;
+    description: string;
+    dateTime: Date;
+    inDiet: boolean;
+}
+
+type SequecenceMeal = IMeals[];
+
 export async function mealsRoutes(app: FastifyInstance) {
     app.get("/", { preHandler: [checkSessionIDExists] }, async (request) => {
         const { sessionId } = request.cookies;
@@ -37,31 +46,38 @@ export async function mealsRoutes(app: FastifyInstance) {
     app.get("/statistics", { preHandler: [checkSessionIDExists] }, async (request) => {
         const { sessionId } = request.cookies;
 
-        const totalMelas = await knex("meals")
-            .where("FK_user_id", sessionId)
-            .count("id", {as: "total"})
-            .first();
+        const allMeals = await knex("meals").
+            where("FK_user_id", sessionId)
+            .select("*");
         
-        const melasInDiet = await knex("meals")
-            .where({
-                FK_user_id: sessionId,
-                inDiet: true
-            })
-            .count("id", {as: "total"})
-            .first();
-        
-        const mealsOutDiet = await knex("meals")
-            .where({
-                FK_user_id: sessionId,
-                inDiet: false
-            })
-            .count("id", {as: "total"})
-            .first();
+        let totalMelas: number = 0;
+        let melasInDiet: number = 0;
+        let mealsOutDiet: number = 0;
+
+        let sequence: SequecenceMeal = [];
+        let bestSequence: number = 0;
+
+        allMeals.map((meal) => {
+            totalMelas += 1;
+            if (meal.inDiet === 1) {
+                melasInDiet += 1;
+                sequence.push(meal);
+            } else {
+                mealsOutDiet += 1;
+                if (sequence.length > 0) {
+                    if (sequence.length > bestSequence) {
+                        bestSequence = sequence.length;
+                    }
+                    sequence = [];
+                }
+            }
+        });
 
         return {
             totalMelas,
             melasInDiet,
             mealsOutDiet,
+            bestSequence
         };
     });
 
